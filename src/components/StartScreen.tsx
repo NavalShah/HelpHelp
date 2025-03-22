@@ -86,7 +86,7 @@ const StartScreen: React.FC<StartScreenProps> = ({ onCallClick }) => {
             <div style={styles.infoSection}>
         <h3 style={styles.infoTitle}>About This App</h3>
         <p style={styles.infoText}>
-          <strong>Safe Word:</strong> HELPHELPHELP
+          <strong>Safe Word:</strong> HELP!
         </p>
         <p style={styles.infoText}>
           This app is designed to help you stay secure in emergencies. It includes:
@@ -131,7 +131,7 @@ const styles = {
     width: '80px',
     height: '80px',
     fontSize: '24px',
-    backgroundColor: '#fff',
+    backgroundColor: '#444',
     border: '1px solid #ccc',
     borderRadius: '50%',
     cursor: 'pointer',
@@ -143,19 +143,19 @@ const styles = {
   },
   number: {
     fontSize: '32px',
-    color: '#eee',
+    color: '#ddd',
   },
   letters: {
     fontSize: '12px',
-    color: '#eee',
+    color: '#ddd',
     marginTop: '4px',
   },
   callButton: {
     width: '80px',
     height: '80px',
     fontSize: '18px',
-    backgroundColor: '#28a745', // Green background
-    color: '#eee',
+    backgroundColor: '#fff', // Green background
+    color: '#fff',
     border: 'none',
     borderRadius: '50%',
     cursor: 'pointer',
@@ -167,7 +167,7 @@ const styles = {
   },
   callIcon: {
     fontSize: '32px',
-    color: '#eee', // White icon
+    color: '#000', // White icon
   },
   bottomBar: {
     display: 'flex',
@@ -195,15 +195,18 @@ const styles = {
   infoTitle: {
     fontSize: '18px',
     margin: '0 0 10px',
+    color: '#fff',
   },
   infoText: {
     fontSize: '14px',
     margin: '0 0 10px',
+    color: '#fff',
   },
   infoList: {
     fontSize: '14px',
     margin: '0 0 10px',
     paddingLeft: '20px',
+    color: '#fff',
   },
 };
 

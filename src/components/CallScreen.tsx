@@ -232,11 +232,11 @@ const styles = {
     marginTop: '40px',
   },
   name: {
-    fontSize: '24px',
+    fontSize: '32px',
     margin: '0',
   },
   status: {
-    fontSize: '16px',
+    fontSize: '20px',
     margin: '10px 0 0',
     color: '#888',
   },
@@ -269,7 +269,7 @@ const styles = {
     width: '80px',
     height: '80px',
     fontSize: '24px',
-    backgroundColor: '#ff4444', // Red background
+    backgroundColor: '#fff', // Red background
     color: '#fff',
     border: 'none',
     borderRadius: '50%',
@@ -281,6 +281,7 @@ const styles = {
   },
   endCallIcon: {
     fontSize: '32px',
+    color: '#000',
   },
 };
 
