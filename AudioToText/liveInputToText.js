@@ -50,6 +50,8 @@ recognition.onresult = (event) => {
         }
     }
     console.log("does not need help");
+
+    transcript[transcript.length-1]    
 };
 
 recognition.onend = () => {
