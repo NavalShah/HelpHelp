@@ -3,6 +3,7 @@ const nodemailer = require("nodemailer");
 const express = require("express");
 const cors = require("cors");
 const axios = require("axios");
+const fs = require("fs");
 
 const app = express();
 const port = 5000;
@@ -38,22 +39,30 @@ app.get('/auth/outlook/callback', async (req, res) => {
 
     try {
         // Exchange authorization code for tokens
-        const response = await axios.post(MICROSOFT_TOKEN_URL, 
+        const tokenResponse = await axios.post(MICROSOFT_TOKEN_URL,
         new URLSearchParams({
             client_id: EmailConfig.CLIENT_ID,
             client_secret: EmailConfig.CLIENT_SECRET,
-            code: code,
-            redirect_uri: EmailConfig.REDIRECT_URI,
-            grant_type: 'authorization_code'
+            refresh_token: EmailConfig.REFRESH_TOKEN,
+            expires_in: 3600,
+            grant_type: 'refresh_token'
         }), {
             headers: {
             'Content-Type': 'application/x-www-form-urlencoded'
             }
+        });
+        
+        const { access_token, refresh_token } = tokenResponse.data;
+        
+        // Save the new refresh token (update EmailConfig or store in DB)
+        if (refresh_token) {
+            EmailConfig.REFRESH_TOKEN = refresh_token;
+            console.log("New refresh token saved:", refresh_token);
+            fs.writeFileSync("./email-config.cjs", JSON.stringify(EmailConfig));
+
         }
-        );
-        
-        const { access_token, refresh_token, expires_in } = response.data;
-        
+
+
         console.log("Access Token:", access_token);
         console.log("Refresh Token:", refresh_token);
         console.log("Token expires in:", expires_in, "seconds");
