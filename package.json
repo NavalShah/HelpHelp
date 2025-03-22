@@ -12,8 +12,10 @@
   "dependencies": {
     "@google/generative-ai": "^0.24.0",
     "@types/web": "^0.0.213",
+    "express": "^4.21.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "twilio": "^5.5.1",
     "vite": "^6.2.2"
   },
   "devDependencies": {

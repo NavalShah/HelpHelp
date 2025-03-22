@@ -57,6 +57,10 @@ function startChat() {
     return model.startChat();
 }
 
+function textNumber(phoneNumber: number) {
+  console.log("Needs Help! Calling " + phoneNumber);
+}
+
 const restartChat = () => {
     console.warn("Restarting chat...");
     return startChat();
@@ -80,6 +84,9 @@ const CallScreen: React.FC<CallScreenProps> = ({ onEndCall }) => {
             speechRec.onresult = (event: SpeechRecognitionEvent) => {
                 if (isSpeaking) return; // Ignore AI-generated speech
                 const transcript = event.results[event.results.length - 1][0].transcript;
+                if(transcript.includes("help")) {
+                  textNumber(3477328531);
+                }
                 sendMessage(transcript);
             };
             setRecognition(speechRec);
