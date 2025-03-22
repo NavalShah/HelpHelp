@@ -1,54 +1,12 @@
-import React from 'react';
-
-interface CallScreenProps {
-  onEndCall: () => void;
-}
-
-const CallScreen: React.FC<CallScreenProps> = ({ onEndCall }) => {
-  return (
-    <div style={styles.container}>
-      {/* Contact Info */}
-      <div style={styles.contactInfo}>
-        <h2 style={styles.name}>John Doe</h2>
-        <p style={styles.status}>Calling...</p>
-
-      </div>
-
-      {/* Call Controls */}
-      <div style={styles.controls}>
-        <button style={styles.controlButton}>
-          <span style={styles.controlIcon}>🔊</span>
-          <span style={styles.controlLabel}>Speaker</span>
-        </button>
-        <button style={styles.controlButton}>
-          <span style={styles.controlIcon}>📹</span>
-          <span style={styles.controlLabel}>FaceTime</span>
-        </button>
-        <button style={styles.controlButton}>
-          <span style={styles.controlIcon}>🎤</span>
-          <span style={styles.controlLabel}>Mute</span>
-        </button>
-        <button style={styles.controlButton}>
-          <span style={styles.controlIcon}>➕</span>
-          <span style={styles.controlLabel}>Add</span>
-        </button>
-        <button style={styles.controlButton}>
-          <span style={styles.controlIcon}>📞</span>
-          <span style={styles.controlLabel}>Keypad</span>
-        </button>
-        <button style={styles.controlButton}>
-          <span style={styles.controlIcon}>📞</span>
-          <span style={styles.controlLabel}>Keypad</span>
-        </button>
-
-      </div>
-    </div>
-  );
 import React, { useState, useEffect, useRef } from 'react';
 
 // Gemini AI Call Integration
 import { ChatSession, GoogleGenerativeAI } from "@google/generative-ai";
 import APIKey from './GeminiAPIKey';
+
+interface CallScreenProps {
+  onEndCall: () => void;
+}
 
 const googleAI = new GoogleGenerativeAI(APIKey);
 const model = googleAI.getGenerativeModel({ model: "gemini-2.0-flash" });
@@ -144,21 +102,43 @@ const CallScreen: React.FC = () => {
     };
 
     return (
-        <div style={styles.container}>
-            <div style={styles.contactInfo}>
-                <h2 style={styles.name}>John Doe</h2>
-                <p style={styles.status}>Calling...</p>
-            </div>
-            <div style={styles.controls}>
-                <button style={styles.controlButton} onClick={startListening}>
-                    <span style={styles.controlIcon}>📞</span>
-                    <span style={styles.controlLabel}>Keypad</span>
-                </button>
-                <button style={styles.endCallButton}>
-                    <span style={styles.endCallIcon}>📞</span>
-                </button>
-            </div>
-        </div>
+      <div style={styles.container}>
+      {/* Contact Info */}
+      <div style={styles.contactInfo}>
+        <h2 style={styles.name}>John Doe</h2>
+        <p style={styles.status}>Calling...</p>
+
+      </div>
+
+      {/* Call Controls */}
+      <div style={styles.controls}>
+        <button style={styles.controlButton}>
+          <span style={styles.controlIcon}>🔊</span>
+          <span style={styles.controlLabel}>Speaker</span>
+        </button>
+        <button style={styles.controlButton}>
+          <span style={styles.controlIcon}>📹</span>
+          <span style={styles.controlLabel}>FaceTime</span>
+        </button>
+        <button style={styles.controlButton}>
+          <span style={styles.controlIcon}>🎤</span>
+          <span style={styles.controlLabel}>Mute</span>
+        </button>
+        <button style={styles.controlButton}>
+          <span style={styles.controlIcon}>➕</span>
+          <span style={styles.controlLabel}>Add</span>
+        </button>
+        <button style={styles.controlButton}>
+          <span style={styles.controlIcon}>📞</span>
+          <span style={styles.controlLabel}>Keypad</span>
+        </button>
+        <button style={styles.controlButton}>
+          <span style={styles.controlIcon}>📞</span>
+          <span style={styles.controlLabel}>Keypad</span>
+        </button>
+
+      </div>
+    </div>
     );
 };
 
