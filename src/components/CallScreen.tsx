@@ -8,11 +8,57 @@ interface CallScreenProps {
   onEndCall: () => void;
 }
 
+declare global {
+  interface Window {
+      webkitSpeechRecognition: typeof SpeechRecognition;
+  }
+
+  var SpeechRecognition: {
+      new (): SpeechRecognition;
+      prototype: SpeechRecognition;
+  };
+
+  interface SpeechRecognition {
+      start(): void;
+      stop(): void;
+      continuous: boolean;
+      interimResults: boolean;
+      lang: string;
+      onresult: ((event: SpeechRecognitionEvent) => void) | null;
+  }
+
+  interface SpeechRecognitionEvent extends Event {
+      results: SpeechRecognitionResultList;
+  }
+
+  interface SpeechRecognitionResultList {
+      readonly length: number;
+      item(index: number): SpeechRecognitionResult;
+      [index: number]: SpeechRecognitionResult;
+  }
+
+  interface SpeechRecognitionResult {
+      readonly length: number;
+      readonly isFinal: boolean;
+      item(index: number): SpeechRecognitionAlternative;
+      [index: number]: SpeechRecognitionAlternative;
+  }
+
+  interface SpeechRecognitionAlternative {
+      readonly transcript: string;
+      readonly confidence: number;
+  }
+}
+
 const googleAI = new GoogleGenerativeAI(APIKey);
 const model = googleAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
 function startChat() {
     return model.startChat();
+}
+
+function textNumber(phoneNumber: number) {
+  console.log("Needs Help! Calling " + phoneNumber);
 }
 
 const restartChat = () => {
@@ -38,6 +84,9 @@ const CallScreen: React.FC<CallScreenProps> = ({ }) => {
             speechRec.onresult = (event: SpeechRecognitionEvent) => {
                 if (isSpeaking) return; // Ignore AI-generated speech
                 const transcript = event.results[event.results.length - 1][0].transcript;
+                if(transcript.includes("help")) {
+                  textNumber(3477328531);
+                }
                 sendMessage(transcript);
             };
             setRecognition(speechRec);
