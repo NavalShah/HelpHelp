@@ -8,6 +8,10 @@ interface CallScreenProps {
   onEndCall: () => void;
 }
 
+const CallScreen: React.FC<CallScreenProps> = ({ onEndCall }) => {
+  
+}
+
 const googleAI = new GoogleGenerativeAI(APIKey);
 const model = googleAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
@@ -101,12 +105,40 @@ const CallScreen: React.FC = () => {
         }
     };
 
-    return (
-      <div style={styles.container}>
+    const [time, setTime] = useState<number>(0);
+  const [calling, setCalling] = useState<boolean>(true);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setCalling(false);
+      let startTime = Date.now();
+      const interval = setInterval(() => {
+        const elapsedTime = Date.now() - startTime;
+        setTime(elapsedTime);
+      }, 1000);
+      return () => clearInterval(interval);
+    }, 2000);
+
+    return () => clearTimeout(timeout);
+  }, []);
+
+  const formatTime = (milliseconds: number): string => {
+    const totalSeconds = Math.floor(milliseconds / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    const formattedMinutes = String(minutes).padStart(2, '0');
+    const formattedSeconds = String(seconds).padStart(2, '0');
+    return `${formattedMinutes}:${formattedSeconds}`;
+  };
+
+  return (
+    <div style={styles.container}>
       {/* Contact Info */}
       <div style={styles.contactInfo}>
         <h2 style={styles.name}>John Doe</h2>
-        <p style={styles.status}>Calling...</p>
+        <p style={styles.status}>
+          {calling ? 'Calling...' : formatTime(time)}
+        </p>
 
       </div>
 
@@ -139,7 +171,7 @@ const CallScreen: React.FC = () => {
 
       </div>
     </div>
-    );
+  );
 };
 
 const styles = {
@@ -208,7 +240,7 @@ const styles = {
   },
   endCallIcon: {
     fontSize: '32px',
-  }
+  },
 };
 
 export default CallScreen;
