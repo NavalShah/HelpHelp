@@ -8,6 +8,48 @@ interface CallScreenProps {
   onEndCall: () => void;
 }
 
+declare global {
+  interface Window {
+      webkitSpeechRecognition: typeof SpeechRecognition;
+  }
+
+  var SpeechRecognition: {
+      new (): SpeechRecognition;
+      prototype: SpeechRecognition;
+  };
+
+  interface SpeechRecognition {
+      start(): void;
+      stop(): void;
+      continuous: boolean;
+      interimResults: boolean;
+      lang: string;
+      onresult: ((event: SpeechRecognitionEvent) => void) | null;
+  }
+
+  interface SpeechRecognitionEvent extends Event {
+      results: SpeechRecognitionResultList;
+  }
+
+  interface SpeechRecognitionResultList {
+      readonly length: number;
+      item(index: number): SpeechRecognitionResult;
+      [index: number]: SpeechRecognitionResult;
+  }
+
+  interface SpeechRecognitionResult {
+      readonly length: number;
+      readonly isFinal: boolean;
+      item(index: number): SpeechRecognitionAlternative;
+      [index: number]: SpeechRecognitionAlternative;
+  }
+
+  interface SpeechRecognitionAlternative {
+      readonly transcript: string;
+      readonly confidence: number;
+  }
+}
+
 const googleAI = new GoogleGenerativeAI(APIKey);
 const model = googleAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
