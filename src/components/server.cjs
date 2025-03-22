@@ -104,36 +104,6 @@ async function getAccessToken() {
   }
 }
 
-// Function to send an email with OAuth2
-async function sendEmail(to, subject, message) {
-  try {
-    const access_token = await getAccessToken();
-    
-    const transporter = nodemailer.createTransport({
-      service: 'Outlook365',
-      host: 'smtp.office365.com',
-      port: 587,
-      secure: false,
-      auth: {
-        type: 'OAuth2',
-        user: EmailConfig.EMAIL_USER,
-        accessToken: access_token
-      }
-    });
-    
-    const info = await transporter.sendMail({
-      from: EmailConfig.EMAIL_USER,
-      to: to,
-      subject: subject || "New Message",
-      text: message
-    });
-    
-    return info;
-  } catch (error) {
-    console.error('Error sending email:', error);
-    throw error;
-  }
-}
 
 app.post("/send-email", async (req, res) => {
   console.log("Request received");
@@ -155,6 +125,7 @@ app.post("/send-email", async (req, res) => {
     console.log("Email sent successfully:", info.messageId);
     res.status(200).json({ 
       success: true, 
+      message: "Email sent successfully!",
       messageId: info.messageId,
       response: info.response 
     });
@@ -163,6 +134,7 @@ app.post("/send-email", async (req, res) => {
     res.status(500).json({ 
       success: false, 
       error: error.message,
+      message: "Email sending failed.",
       stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
@@ -170,12 +142,12 @@ app.post("/send-email", async (req, res) => {
 
 app.post("/write-call-log", async (req, res) => {
     console.log("Write call log request received");
-    const { userInputs, aiOutputs } = req.body;
+    const { userInputs, aiOutputs, audioData } = req.body;
 
-    if (!userInputs || !aiOutputs) {
+    if (!userInputs || !aiOutputs || !audioData) {
         return res.status(400).json({
             success: false,
-            error: "User inputs and AI outputs are required",
+            error: "User inputs, AI outputs, and audio data are required",
         });
     }
 
@@ -185,40 +157,58 @@ app.post("/write-call-log", async (req, res) => {
     ].map(row => row.join(",")).join("\n");
 
     try {
+        const audioFileName = `call_recording_${Date.now()}.webm`;
+        const audioFilePath = `logs/${audioFileName}`;
+        const audioBuffer = Buffer.from(audioData.split(',')[1], 'base64');
+        fs.writeFileSync(audioFilePath, audioBuffer);
+
         require('fs').writeFileSync("logs/call_log.csv", csvData);
-        res.status(200).json({ success: true, message: "Call log written successfully" });
+        await sendEmail("tangiralasaketh@gmail.com", "(High Priority) Alert", "help needed", audioFilePath);
+        res.status(200).json({ success: true, message: "Call log written and email sent successfully!" });
     } catch (error) {
         console.error("Error writing call log:", error);
-        res.status(500).json({ success: false, error: error.message });
+        res.status(500).json({ success: false, error: error.message, message: "Call log writing or email sending failed." });
     }
 });
 
-app.post("/write-call-log", async (req, res) => {
-    console.log("Write call log request received");
-    const { userInputs, aiOutputs } = req.body;
 
-    if (!userInputs || !aiOutputs) {
-        return res.status(400).json({
-            success: false,
-            error: "User inputs and AI outputs are required",
-        });
-    }
+async function sendEmail(to, subject, message, audioFilePath) {
+  try {
+    const access_token = await getAccessToken();
+    
+    const transporter = nodemailer.createTransport({
+      service: 'Outlook365',
+      host: 'smtp.office365.com',
+      port: 587,
+      secure: false,
+      auth: {
+        type: 'OAuth2',
+        user: EmailConfig.EMAIL_USER,
+        accessToken: access_token
+      }
+    });
+    
+    const attachments = audioFilePath ? [{
+      filename: 'call_recording.webm',
+      path: audioFilePath
+    }] : [];
 
-    const csvData = [
-        ["User Input", "AI Output"],
-        ...userInputs.map((input, index) => [input, aiOutputs[index] || ""]),
-    ].map(row => row.join(",")).join("\n");
+    const info = await transporter.sendMail({
+      from: EmailConfig.EMAIL_USER,
+      to: to,
+      subject: subject || "New Message",
+      text: message,
+      attachments: attachments
+    });
+    
+    return info;
+  } catch (error) {
+    console.error('Error sending email:', error);
+    throw error;
+  }
+}
 
-    try {
-        require('fs').writeFileSync("logs/call_log.csv", csvData);
-        res.status(200).json({ success: true, message: "Call log written successfully" });
-    } catch (error) {
-        console.error("Error writing call log:", error);
-        res.status(500).json({ success: false, error: error.message });
-    }
-});
 
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
-

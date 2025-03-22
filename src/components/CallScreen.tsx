@@ -6,21 +6,31 @@ import APIKey from './GeminiAPIKey';
 
 // Twilio stuff
 
-async function textNumber(lat: any, lon: any) {
+const instructions = "Respond briefly and conversationally. Be casual, and brief. The user is calling you to speak to you, so don't use emojis and don't bother with formatting.";
+
+async function textNumber(chat: ChatSession, lat: any, lon: any) {
     console.log("Needs Help!");
+    let a = await chat.getHistory();
+    let h = (a.map(x => x.parts.map(y => y.text).join("\n"))).join("\n");
+
+    for (let i = 0; i < a.length; i++) {
+        h = h.replace(instructions, "");
+    }
 
     const response = await fetch("http://localhost:5000/send-email", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
         },
-        body: JSON.stringify({ message: "help needed at " + lat + ", " + lon }),
+        body: JSON.stringify({ message: "help needed at " + lat + ", " + lon + "\n\nlogs: \n" + h }),
     });
 
     const data = await response.json();
     if (data.success) {
+        alert(data.message);
         return ("Message sent successfully!");
     } else {
+        alert(data.message);
         return (`Error: ${data.error}`);
     }
 
@@ -80,7 +90,6 @@ function startChat() {
     return model.startChat();
 }
 
-
 const restartChat = () => {
     console.warn("Restarting chat...");
     return startChat();
@@ -95,9 +104,9 @@ const CallScreen: React.FC<CallScreenProps> = ({ onEndCall }) => {
     const [isSpeaking, setIsSpeaking] = useState(false);
     const [userInputs, setUserInputs] = useState<string[]>([]);
     const [aiOutputs, setAiOutputs] = useState<string[]>([]);
-    const [latitude, setLatitude] = useState<number | null>(null);
-    const [longitude, setLongitude] = useState<number | null>(null);
-    const [error, setError] = useState<string | null>(null);
+    const [time, setTime] = useState<number>(0);
+    const [calling, setCalling] = useState<boolean>(true);
+    const isMounted = React.useRef(true);
 
     useEffect(() => {
         if (!chat) setChat(startChat());
@@ -107,21 +116,21 @@ const CallScreen: React.FC<CallScreenProps> = ({ onEndCall }) => {
             speechRec.interimResults = false;
             speechRec.lang = 'en-US';
             speechRec.onresult = (event: SpeechRecognitionEvent) => {
-                if (isSpeaking) return; // Ignore AI-generated speech
+                if (isSpeaking) return;
                 const transcript = event.results[event.results.length - 1][0].transcript;
                 if (transcript.includes("help")) {
                     let latitude;
                     let longitude;
                     navigator.geolocation.getCurrentPosition(
                         (position) => {
-                            latitude = (position.coords.latitude);
-                            longitude = (position.coords.longitude);
+                            latitude = position.coords.latitude;
+                            longitude = position.coords.longitude;
+                            textNumber(chat, latitude, longitude);
                         },
                         (error) => {
-                            setError(error.message);
+                            console.error("Error getting location:", error);
                         }
                     );
-                    textNumber(latitude, longitude);
                 }
                 setUserInputs(prevInputs => [...prevInputs, transcript]);
                 sendMessage(transcript);
@@ -129,7 +138,7 @@ const CallScreen: React.FC<CallScreenProps> = ({ onEndCall }) => {
             setRecognition(speechRec);
             speechRec.start();
         }
-    }, [chat]);
+    }, [calling]);
 
     const restartRecognition = () => {
         if (recognition) {
@@ -154,7 +163,7 @@ const CallScreen: React.FC<CallScreenProps> = ({ onEndCall }) => {
     };
 
     const sendMessage = async (input: string) => {
-        input = input + " Respond briefly and conversationally. Be casual, and brief. The user is calling you to speak to you, so don't use emojis and don't bother with formatting.";
+        input = input + instructions;
         if (isWaiting) return;
         if (input.trim() !== "") {
             setWaiting(true);
@@ -163,16 +172,26 @@ const CallScreen: React.FC<CallScreenProps> = ({ onEndCall }) => {
                 if (!result) throw new Error("Failed to get response from AI");
                 const responseText = await result.response.text();
                 console.log("AI Response:", responseText);
-                setAiOutputs(prevOutputs => [...prevOutputs, responseText]);
-                await speak(responseText);
+                if (isMounted.current) {
+                    setAiOutputs(prevOutputs => [...prevOutputs, responseText]);
+                    await speak(responseText);
+                }
             } catch (error) {
                 console.error("Error with AI response:", error);
-                setChat(restartChat());
                 startListening();
+            } finally {
+                if (isMounted.current) {
+                    setWaiting(false);
+                }
             }
-            setWaiting(false);
         }
     };
+
+    useEffect(() => {
+        return () => {
+            isMounted.current = false;
+        };
+    }, []);
 
     const startListening = () => {
         try {
@@ -184,23 +203,6 @@ const CallScreen: React.FC<CallScreenProps> = ({ onEndCall }) => {
             restartRecognition();
         }
     };
-
-    const [time, setTime] = useState<number>(0);
-    const [calling, setCalling] = useState<boolean>(true);
-
-    useEffect(() => {
-        const timeout = setTimeout(() => {
-            setCalling(false);
-            let startTime = Date.now();
-            const interval = setInterval(() => {
-                const elapsedTime = Date.now() - startTime;
-                setTime(elapsedTime);
-            }, 1000);
-            return () => clearInterval(interval);
-        }, 2000);
-
-        return () => clearTimeout(timeout);
-    }, []);
 
     const formatTime = (milliseconds: number): string => {
         const totalSeconds = Math.floor(milliseconds / 1000);
@@ -221,15 +223,18 @@ const CallScreen: React.FC<CallScreenProps> = ({ onEndCall }) => {
                 body: JSON.stringify({ userInputs, aiOutputs }),
             });
 
-            const data = await response.json();
+           const data = await response.json();
 
             if (data.success) {
                 console.log("Call log written successfully");
+                alert(data.message);
             } else {
                 console.error("Error writing call log:", data.error);
+                 alert(data.message);
             }
         } catch (error) {
             console.error("Error calling write-call-log API:", error);
+             alert("Error calling write-call-log API");
         }
 
         if (recognition) {
