@@ -8,16 +8,6 @@ import APIKey from './GeminiAPIKey';
 
 function textNumber() {
   console.log("Needs Help!");
-
-  /*
-  client.messages
-  .create({
-    from: twilioNumber,
-    to: myNumber,
-    body: "You just sent an SMS from TypeScript using Twilio!",
-  })
-  .then((message) => console.log(message.sid));
-  */
 }
 
 
