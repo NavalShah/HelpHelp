@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
-import { ChatSession, GoogleGenerativeAI, StartChatParams } from "@google/generative-ai";
+import { useState, useEffect, useRef } from 'react';
+import { ChatSession, GoogleGenerativeAI } from "@google/generative-ai";
 import APIKey from './GeminiAPIKey';
 
 const googleAI = new GoogleGenerativeAI(APIKey);
