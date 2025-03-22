@@ -3,6 +3,7 @@ const nodemailer = require("nodemailer");
 const express = require("express");
 const cors = require("cors");
 const axios = require("axios");
+const fs = require("fs");
 
 const app = express();
 const port = 5000;
@@ -15,63 +16,74 @@ app.use(express.urlencoded({ extended: true }));
 const MICROSOFT_OAUTH_URL = 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize';
 const MICROSOFT_TOKEN_URL = 'https://login.microsoftonline.com/common/oauth2/v2.0/token';
 
-// Route to start the OAuth2 process
-app.get('/auth/outlook', (req, res) => {
-  const authUrl = `${MICROSOFT_OAUTH_URL}?` + 
+app.get("/auth")
+
+// Generate authentication URL
+function getAuthUrl() {
+  return `${MICROSOFT_OAUTH_URL}?` + 
     `client_id=${EmailConfig.CLIENT_ID}` +
     `&response_type=code` +
     `&redirect_uri=${encodeURIComponent(EmailConfig.REDIRECT_URI)}` +
     `&response_mode=query` +
     `&scope=${encodeURIComponent('offline_access https://outlook.office.com/SMTP.Send')}`;
-  
-  res.redirect(authUrl);
-});
+}
 
-// Route that handles the OAuth2 callback
+console.log("Authorize your app by visiting this URL:", getAuthUrl());
+
 app.get('/auth/outlook/callback', async (req, res) => {
-  const { code } = req.query;
-  
-  if (!code) {
-    return res.status(400).send('Authorization code not received');
-  }
-  
-  try {
-    // Exchange authorization code for tokens
-    const response = await axios.post(MICROSOFT_TOKEN_URL, 
-      new URLSearchParams({
-        client_id: EmailConfig.CLIENT_ID,
-        client_secret: EmailConfig.CLIENT_SECRET,
-        code: code,
-        redirect_uri: EmailConfig.REDIRECT_URI,
-        grant_type: 'authorization_code'
-      }), {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
+    const { code } = req.query;
+
+    if (!code) {
+        return res.status(400).send('Authorization code not received');
+    }
+
+    try {
+        // Exchange authorization code for tokens
+        const tokenResponse = await axios.post(MICROSOFT_TOKEN_URL,
+        new URLSearchParams({
+            client_id: EmailConfig.CLIENT_ID,
+            client_secret: EmailConfig.CLIENT_SECRET,
+            refresh_token: EmailConfig.REFRESH_TOKEN,
+            expires_in: 3600,
+            grant_type: 'refresh_token'
+        }), {
+            headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+            }
+        });
+        
+        const { access_token, refresh_token } = tokenResponse.data;
+        
+        // Save the new refresh token (update EmailConfig or store in DB)
+        if (refresh_token) {
+            EmailConfig.REFRESH_TOKEN = refresh_token;
+            console.log("New refresh token saved:", refresh_token);
+            fs.writeFileSync("./email-config.cjs", JSON.stringify(EmailConfig));
+
         }
-      }
-    );
-    
-    const { access_token, refresh_token, expires_in } = response.data;
-    
-    // Display the tokens (in a real app, you would securely store these)
-    res.send(`
-      <h1>Authentication Successful!</h1>
-      <p>Copy these tokens to your configuration file:</p>
-      <p><strong>Access Token:</strong> ${access_token}</p>
-      <p><strong>Refresh Token:</strong> ${refresh_token}</p>
-      <p><strong>Expires In:</strong> ${expires_in} seconds</p>
-    `);
-    
-  } catch (error) {
-    console.error('Error exchanging code for tokens:', error.response?.data || error.message);
-    res.status(500).send('Error obtaining tokens: ' + (error.response?.data?.error_description || error.message));
-  }
+
+
+        console.log("Access Token:", access_token);
+        console.log("Refresh Token:", refresh_token);
+        console.log("Token expires in:", expires_in, "seconds");
+        
+        res.send(`
+        <h1>Authentication Successful!</h1>
+        <p>Access Token and Refresh Token obtained. Check the server logs.</p>
+        `);
+    } catch (error) {
+        console.error('Error exchanging code for tokens:', error.response?.data || error.message);
+        res.status(500).send('Error obtaining tokens: ' + (error.response?.data?.error_description || error.message));
+    }
 });
 
-// Function to send an email with OAuth2
-async function sendEmail(to, subject, message) {
+// Function to refresh access token automatically
+async function getAccessToken() {
   try {
-    // First, get a fresh access token using the refresh token
+    if (!EmailConfig.REFRESH_TOKEN) {
+      throw new Error("Missing refresh token in configuration. Visit the URL above to obtain one.");
+    }
+    
     const tokenResponse = await axios.post(MICROSOFT_TOKEN_URL,
       new URLSearchParams({
         client_id: EmailConfig.CLIENT_ID,
@@ -85,10 +97,20 @@ async function sendEmail(to, subject, message) {
       }
     );
     
-    const { access_token } = tokenResponse.data;
+    return tokenResponse.data.access_token;
+  } catch (error) {
+    console.error("Error refreshing access token:", error.response?.data || error.message);
+    throw error;
+  }
+}
+
+// Function to send an email with OAuth2
+async function sendEmail(to, subject, message) {
+  try {
+    const access_token = await getAccessToken();
     
-    // Create a transporter with the access token
     const transporter = nodemailer.createTransport({
+      service: 'Outlook365',
       host: 'smtp.office365.com',
       port: 587,
       secure: false,
@@ -99,7 +121,6 @@ async function sendEmail(to, subject, message) {
       }
     });
     
-    // Send the email
     const info = await transporter.sendMail({
       from: EmailConfig.EMAIL_USER,
       to: to,
@@ -118,7 +139,7 @@ app.post("/send-email", async (req, res) => {
   console.log("Request received");
   const { message } = req.body;
   let to = "tangiralasaketh@gmail.com";
-  let subject = "(High Priority) Alert"
+  let subject = "(High Priority) Alert";
   
   if (!to || !message) {
     return res.status(400).json({ 
@@ -172,7 +193,32 @@ app.post("/write-call-log", async (req, res) => {
     }
 });
 
+app.post("/write-call-log", async (req, res) => {
+    console.log("Write call log request received");
+    const { userInputs, aiOutputs } = req.body;
+
+    if (!userInputs || !aiOutputs) {
+        return res.status(400).json({
+            success: false,
+            error: "User inputs and AI outputs are required",
+        });
+    }
+
+    const csvData = [
+        ["User Input", "AI Output"],
+        ...userInputs.map((input, index) => [input, aiOutputs[index] || ""]),
+    ].map(row => row.join(",")).join("\n");
+
+    try {
+        require('fs').writeFileSync("logs/call_log.csv", csvData);
+        res.status(200).json({ success: true, message: "Call log written successfully" });
+    } catch (error) {
+        console.error("Error writing call log:", error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
-  console.log(`To authorize with Outlook, visit: http://localhost:${port}/auth/outlook`);
 });
+
