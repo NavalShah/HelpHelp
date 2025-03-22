@@ -3,6 +3,17 @@ import React, { useState, useEffect } from 'react';
 // Gemini AI Call Integration
 import { ChatSession, GoogleGenerativeAI } from "@google/generative-ai";
 import APIKey from './GeminiAPIKey';
+import TwilioAPIKey from './twilioAPIKey';
+
+// Twilio stuff
+import { Twilio } from 'twilio';
+
+async function textNumber() {
+  console.log("Needs Help!");
+  const client = new Twilio(TwilioAPIKey.TWILIO_SID, TwilioAPIKey.TWILIO_AUTH_TOKEN);
+  return client.messages.create({body:"HEY IT WORKS", from:"3476139940", to: TwilioAPIKey.PHONE_NUMBER});
+}
+
 
 interface CallScreenProps {
   onEndCall: () => void;
@@ -57,9 +68,6 @@ function startChat() {
     return model.startChat();
 }
 
-function textNumber(phoneNumber: number) {
-  console.log("Needs Help! Calling " + phoneNumber);
-}
 
 const restartChat = () => {
     console.warn("Restarting chat...");
@@ -85,7 +93,7 @@ const CallScreen: React.FC<CallScreenProps> = ({ onEndCall }) => {
                 if (isSpeaking) return; // Ignore AI-generated speech
                 const transcript = event.results[event.results.length - 1][0].transcript;
                 if(transcript.includes("help")) {
-                  textNumber(3477328531);
+                  textNumber();
                 }
                 sendMessage(transcript);
             };
