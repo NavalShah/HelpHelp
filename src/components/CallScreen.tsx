@@ -6,71 +6,71 @@ import APIKey from './GeminiAPIKey';
 
 // Twilio stuff
 
-async function textNumber() {
-  console.log("Needs Help!");
+async function textNumber(lat: any, lon: any) {
+    console.log("Needs Help!");
 
-  const response = await fetch("http://localhost:5000/send-email", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ message: "help!" }),
-  });
+    const response = await fetch("http://localhost:5000/send-email", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ message: "help needed at " + lat + ", " + lon }),
+    });
 
-  const data = await response.json();
-  if (data.success) {
-    return ("Message sent successfully!");
-  } else {
-    return (`Error: ${data.error}`);
-  }
+    const data = await response.json();
+    if (data.success) {
+        return ("Message sent successfully!");
+    } else {
+        return (`Error: ${data.error}`);
+    }
 
 }
 
 
 interface CallScreenProps {
-  onEndCall: () => void;
+    onEndCall: () => void;
 }
 
 declare global {
-  interface Window {
-      webkitSpeechRecognition: typeof SpeechRecognition;
-  }
+    interface Window {
+        webkitSpeechRecognition: typeof SpeechRecognition;
+    }
 
-  var SpeechRecognition: {
-      new (): SpeechRecognition;
-      prototype: SpeechRecognition;
-  };
+    var SpeechRecognition: {
+        new(): SpeechRecognition;
+        prototype: SpeechRecognition;
+    };
 
-  interface SpeechRecognition {
-      start(): void;
-      stop(): void;
-      continuous: boolean;
-      interimResults: boolean;
-      lang: string;
-      onresult: ((event: SpeechRecognitionEvent) => void) | null;
-  }
+    interface SpeechRecognition {
+        start(): void;
+        stop(): void;
+        continuous: boolean;
+        interimResults: boolean;
+        lang: string;
+        onresult: ((event: SpeechRecognitionEvent) => void) | null;
+    }
 
-  interface SpeechRecognitionEvent extends Event {
-      results: SpeechRecognitionResultList;
-  }
+    interface SpeechRecognitionEvent extends Event {
+        results: SpeechRecognitionResultList;
+    }
 
-  interface SpeechRecognitionResultList {
-      readonly length: number;
-      item(index: number): SpeechRecognitionResult;
-      [index: number]: SpeechRecognitionResult;
-  }
+    interface SpeechRecognitionResultList {
+        readonly length: number;
+        item(index: number): SpeechRecognitionResult;
+        [index: number]: SpeechRecognitionResult;
+    }
 
-  interface SpeechRecognitionResult {
-      readonly length: number;
-      readonly isFinal: boolean;
-      item(index: number): SpeechRecognitionAlternative;
-      [index: number]: SpeechRecognitionAlternative;
-  }
+    interface SpeechRecognitionResult {
+        readonly length: number;
+        readonly isFinal: boolean;
+        item(index: number): SpeechRecognitionAlternative;
+        [index: number]: SpeechRecognitionAlternative;
+    }
 
-  interface SpeechRecognitionAlternative {
-      readonly transcript: string;
-      readonly confidence: number;
-  }
+    interface SpeechRecognitionAlternative {
+        readonly transcript: string;
+        readonly confidence: number;
+    }
 }
 
 const googleAI = new GoogleGenerativeAI(APIKey);
@@ -95,6 +95,9 @@ const CallScreen: React.FC<CallScreenProps> = ({ onEndCall }) => {
     const [isSpeaking, setIsSpeaking] = useState(false);
     const [userInputs, setUserInputs] = useState<string[]>([]);
     const [aiOutputs, setAiOutputs] = useState<string[]>([]);
+    const [latitude, setLatitude] = useState<number | null>(null);
+    const [longitude, setLongitude] = useState<number | null>(null);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         if (!chat) setChat(startChat());
@@ -106,8 +109,19 @@ const CallScreen: React.FC<CallScreenProps> = ({ onEndCall }) => {
             speechRec.onresult = (event: SpeechRecognitionEvent) => {
                 if (isSpeaking) return; // Ignore AI-generated speech
                 const transcript = event.results[event.results.length - 1][0].transcript;
-                if(transcript.includes("help")) {
-                  textNumber();
+                if (transcript.includes("help")) {
+                    let latitude;
+                    let longitude;
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            latitude = (position.coords.latitude);
+                            longitude = (position.coords.longitude);
+                        },
+                        (error) => {
+                            setError(error.message);
+                        }
+                    );
+                    textNumber(latitude, longitude);
                 }
                 setUserInputs(prevInputs => [...prevInputs, transcript]);
                 sendMessage(transcript);
@@ -191,7 +205,7 @@ const CallScreen: React.FC<CallScreenProps> = ({ onEndCall }) => {
     const formatTime = (milliseconds: number): string => {
         const totalSeconds = Math.floor(milliseconds / 1000);
         const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds % 60;
+        const seconds = totalSeconds % 60;
         return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
     };
 
@@ -243,79 +257,79 @@ const CallScreen: React.FC<CallScreenProps> = ({ onEndCall }) => {
 }
 
 const styles = {
-  container: {
-    display: 'flex',
-    flexDirection: 'column' as 'column',
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-    height: '100vh',
-    backgroundColor: '#000',
-    color: '#fff',
-    padding: '20px',
-  },
-  buttonContainer: {
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: '50vh',
-    transform: 'translateY(-50%)',
-  },
-  contactInfo: {
-    textAlign: 'center' as 'center',
-    marginTop: '40px',
-  },
-  name: {
-    fontSize: '32px',
-    margin: '0',
-  },
-  status: {
-    fontSize: '20px',
-    margin: '10px 0 0',
-    color: '#888',
-  },
-  controls: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(3, 1fr)',
-    gap: '20px',
-    width: '100%',
-    maxWidth: '400px',
-    margin: '40px 0',
-  },
-  controlButton: {
-    display: 'flex',
-    flexDirection: 'column' as 'column',
-    alignItems: 'center',
-    backgroundColor: 'transparent',
-    border: 'none',
-    color: '#fff',
-    cursor: 'pointer',
-  },
-  controlIcon: {
-    fontSize: '24px',
-    marginBottom: '8px',
-  },
-  controlLabel: {
-    fontSize: '14px',
-    color: '#888',
-  },
-  endCallButton: {
-    width: '80px',
-    height: '80px',
-    fontSize: '24px',
-    backgroundColor: '#fff', // Red background
-    color: '#fff',
-    border: 'none',
-    borderRadius: '50%',
-    cursor: 'pointer',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)',
-  },
-  endCallIcon: {
-    fontSize: '32px',
-    color: '#000',
-  },
+    container: {
+        display: 'flex',
+        flexDirection: 'column' as 'column',
+        justifyContent: 'flex-start',
+        alignItems: 'center',
+        height: '100vh',
+        backgroundColor: '#000',
+        color: '#fff',
+        padding: '20px',
+    },
+    buttonContainer: {
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: '50vh',
+        transform: 'translateY(-50%)',
+    },
+    contactInfo: {
+        textAlign: 'center' as 'center',
+        marginTop: '40px',
+    },
+    name: {
+        fontSize: '32px',
+        margin: '0',
+    },
+    status: {
+        fontSize: '20px',
+        margin: '10px 0 0',
+        color: '#888',
+    },
+    controls: {
+        display: 'grid',
+        gridTemplateColumns: 'repeat(3, 1fr)',
+        gap: '20px',
+        width: '100%',
+        maxWidth: '400px',
+        margin: '40px 0',
+    },
+    controlButton: {
+        display: 'flex',
+        flexDirection: 'column' as 'column',
+        alignItems: 'center',
+        backgroundColor: 'transparent',
+        border: 'none',
+        color: '#fff',
+        cursor: 'pointer',
+    },
+    controlIcon: {
+        fontSize: '24px',
+        marginBottom: '8px',
+    },
+    controlLabel: {
+        fontSize: '14px',
+        color: '#888',
+    },
+    endCallButton: {
+        width: '80px',
+        height: '80px',
+        fontSize: '24px',
+        backgroundColor: '#fff', // Red background
+        color: '#fff',
+        border: 'none',
+        borderRadius: '50%',
+        cursor: 'pointer',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)',
+    },
+    endCallIcon: {
+        fontSize: '32px',
+        color: '#000',
+    },
 };
 
 export default CallScreen;
