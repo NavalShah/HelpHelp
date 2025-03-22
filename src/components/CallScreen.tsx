@@ -11,6 +11,7 @@ const CallScreen: React.FC<CallScreenProps> = ({ onEndCall }) => {
       <div style={styles.contactInfo}>
         <h2 style={styles.name}>John Doe</h2>
         <p style={styles.status}>Calling...</p>
+
       </div>
 
       {/* Call Controls */}
@@ -48,7 +49,7 @@ const CallScreen: React.FC<CallScreenProps> = ({ onEndCall }) => {
 const styles = {
   container: {
     display: 'flex',
-    flexDirection: 'column',
+    flexDirection: 'column' as 'column',
     justifyContent: 'space-between',
     alignItems: 'center',
     height: '100vh',
@@ -57,7 +58,7 @@ const styles = {
     padding: '20px',
   },
   contactInfo: {
-    textAlign: 'center',
+    textAlign: 'center' as 'center',
     marginTop: '40px',
   },
   name: {
@@ -79,7 +80,7 @@ const styles = {
   },
   controlButton: {
     display: 'flex',
-    flexDirection: 'column',
+    flexDirection: 'column' as 'column',
     alignItems: 'center',
     backgroundColor: 'transparent',
     border: 'none',
