@@ -107,7 +107,7 @@ const styles = {
     flexDirection: 'column' as 'column',
     alignItems: 'center',
     minHeight: '100vh',
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#222',
     padding: '20px',
   },
   topSpace: {
@@ -143,11 +143,11 @@ const styles = {
   },
   number: {
     fontSize: '32px',
-    color: '#000',
+    color: '#eee',
   },
   letters: {
     fontSize: '12px',
-    color: '#888',
+    color: '#eee',
     marginTop: '4px',
   },
   callButton: {
@@ -155,7 +155,7 @@ const styles = {
     height: '80px',
     fontSize: '18px',
     backgroundColor: '#28a745', // Green background
-    color: '#fff',
+    color: '#eee',
     border: 'none',
     borderRadius: '50%',
     cursor: 'pointer',
@@ -167,7 +167,7 @@ const styles = {
   },
   callIcon: {
     fontSize: '32px',
-    color: '#fff', // White icon
+    color: '#eee', // White icon
   },
   bottomBar: {
     display: 'flex',
@@ -175,19 +175,19 @@ const styles = {
     width: '100%',
     maxWidth: '600px',
     padding: '10px',
-    backgroundColor: '#fff',
+    backgroundColor: '#333',
     borderTop: '1px solid #ccc',
   },
   bottomBarButton: {
     backgroundColor: 'transparent',
     border: 'none',
-    color: '#007bff',
+    color: '#eee',
     fontSize: '14px',
     cursor: 'pointer',
   },
   infoSection: {
     padding: '20px',
-    backgroundColor: '#fff',
+    backgroundColor: '#333',
     borderTop: '1px solid #ccc',
     width: '100%',
     maxWidth: '600px',

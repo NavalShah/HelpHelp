@@ -3,29 +3,30 @@ import React, { useState, useEffect } from 'react';
 // Gemini AI Call Integration
 import { ChatSession, GoogleGenerativeAI } from "@google/generative-ai";
 import APIKey from './GeminiAPIKey';
-import TwilioAPIKey from './twilioAPIKey';
+import TwilioAPIKey from './TwilioAPIKey';
 
 // Twilio stuff
-async function textNumber() {
-  try {
-    const response = await fetch("http://localhost:5000/send-sms", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ to: TwilioAPIKey.TWILIO_PHONE_NUMBER, message: "testing testing 987" }),
-    });
+import Twilio from "twilio";
 
-    const data = await response.json();
-    if (data.success) {
-      return ("Message sent successfully!");
-    } else {
-      return (`Error: ${data.error}`);
-    }
-  } catch (error) {
-    return ("Failed to send message.");
-  }
+const accountSid = TwilioAPIKey.TWILIO_ACCOUNT_SID;
+const authToken = TwilioAPIKey.TWILIO_AUTH_TOKEN;
+const twilioNumber = TwilioAPIKey.TWILIO_PHONE_NUMBER;
+const myNumber = TwilioAPIKey.MY_NUMBER;
 
+const client = new Twilio.Twilio(accountSid, authToken);
+
+function textNumber() {
+  console.log("Needs Help!");
+
+  /*
+  client.messages
+  .create({
+    from: twilioNumber,
+    to: myNumber,
+    body: "You just sent an SMS from TypeScript using Twilio!",
+  })
+  .then((message) => console.log(message.sid));
+  */
 }
 
 
@@ -90,7 +91,7 @@ const restartChat = () => {
 
 const SpeechRecognitionAPI = window.webkitSpeechRecognition || window.SpeechRecognition;
 
-const CallScreen: React.FC<CallScreenProps> = ({ }) => {
+const CallScreen: React.FC<CallScreenProps> = ({ onEndCall }) => {
     const [chat, setChat] = useState<ChatSession>(startChat());
     const [isWaiting, setWaiting] = useState(false);
     const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
@@ -189,7 +190,7 @@ const CallScreen: React.FC<CallScreenProps> = ({ }) => {
     const formatTime = (milliseconds: number): string => {
         const totalSeconds = Math.floor(milliseconds / 1000);
         const minutes = Math.floor(totalSeconds / 60);
-        const seconds = totalSeconds % 60;
+    const seconds = totalSeconds % 60;
         return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
     };
 
@@ -199,13 +200,14 @@ const CallScreen: React.FC<CallScreenProps> = ({ }) => {
                 <h2 style={styles.name}>John Doe</h2>
                 <p style={styles.status}>{calling ? 'Calling...' : formatTime(time)}</p>
             </div>
-            <div style={styles.controls}>
+            <div style={styles.buttonContainer}>
                 <button style={styles.controlButton}><span style={styles.controlIcon}>🔊</span><span style={styles.controlLabel}>Speaker</span></button>
                 <button style={styles.controlButton}><span style={styles.controlIcon}>📹</span><span style={styles.controlLabel}>FaceTime</span></button>
                 <button style={styles.controlButton}><span style={styles.controlIcon}>🎤</span><span style={styles.controlLabel}>Mute</span></button>
                 <button style={styles.controlButton}><span style={styles.controlIcon}>➕</span><span style={styles.controlLabel}>Add</span></button>
-                <button style={styles.controlButton}><span style={styles.controlIcon}>📞</span><span style={styles.controlLabel}>Keypad</span></button>
+                <button style={styles.controlButton}><span style={styles.controlIcon}>📱</span><span style={styles.controlLabel}>Keypad</span></button>
             </div>
+            <button style={styles.endCallButton} onClick={onEndCall}><span style={styles.endCallIcon}>📞</span></button>
         </div>
     );
 };
@@ -214,12 +216,19 @@ const styles = {
   container: {
     display: 'flex',
     flexDirection: 'column' as 'column',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
     alignItems: 'center',
     height: '100vh',
     backgroundColor: '#000',
     color: '#fff',
     padding: '20px',
+  },
+  buttonContainer: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: '50vh',
+    transform: 'translateY(-50%)',
   },
   contactInfo: {
     textAlign: 'center' as 'center',
@@ -260,7 +269,6 @@ const styles = {
     color: '#888',
   },
   endCallButton: {
-    gridColumn: '2 / 3', // Center the end call button
     width: '80px',
     height: '80px',
     fontSize: '24px',

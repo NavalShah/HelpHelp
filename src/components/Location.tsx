@@ -29,17 +29,28 @@ const Location = () => {
   }, []);
 
   return (
-    <div>
-      <h2>Location</h2>
+    <div style={styles.container}>
       {latitude && longitude ? (
-        <p>
-          Latitude: {latitude}, Longitude: {longitude}
+        <p style={styles.locationText}>
+          {latitude}, {longitude}
         </p>
       ) : (
-        <p>{error || "Loading location..."}</p>
+        <p style={styles.locationText}>{error || "Loading location..."}</p>
       )}
     </div>
   );
+};
+
+const styles = {
+  container: {
+    textAlign: 'center' as 'center',
+    backgroundColor: '#333',
+    color: '#eee',
+    padding: '10px',
+  },
+  locationText: {
+    fontSize: '18px',
+  },
 };
 
 export default Location;
