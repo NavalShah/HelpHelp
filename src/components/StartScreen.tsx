@@ -104,7 +104,7 @@ const StartScreen: React.FC<StartScreenProps> = ({ onCallClick }) => {
 const styles = {
   container: {
     display: 'flex',
-    flexDirection: 'column',
+    flexDirection: 'column' as 'column',
     alignItems: 'center',
     minHeight: '100vh',
     backgroundColor: '#f0f0f0',
@@ -115,7 +115,7 @@ const styles = {
   },
   dialingPad: {
     display: 'flex',
-    flexDirection: 'column',
+    flexDirection: 'column' as 'column',
     justifyContent: 'center',
     alignItems: 'center',
     flex: 1,
@@ -136,7 +136,7 @@ const styles = {
     borderRadius: '50%',
     cursor: 'pointer',
     display: 'flex',
-    flexDirection: 'column',
+    flexDirection: 'column' as 'column',
     justifyContent: 'center',
     alignItems: 'center',
     boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)',
