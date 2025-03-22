@@ -4,41 +4,48 @@ const SpeechRecognitionEvent = window.SpeechRecognitionEvent || window.webkitSpe
 
 const recognition = new SpeechRecognition();
 
+let recording = false
 recognition.continuous = true;
 recognition.interimResults = true;
 recognition.lang = 'en-US';
 
+setInterval(resetVoiceRecog, 10000);
+function resetVoiceRecog() {
+    if(recording) {
+        recognition.stop();
+        //Refrence the llm for audio content
+    }
+}
+
 recognition.onstart = () => {
+    recording = true;
     console.log('Speech recognition started');
 };
 
-recognition.addEventListener("result", (event) => {
+recognition.onresult =  (event) => {
     let transcript = Array.from(event.results).map(result => result[0]).map(result => result.transcript);
-    for (let i = event.resultIndex; i < event.results[0].length; i++) {
-        if (event.results[0][i].isFinal) {
-            transcript += event.results[0][i].transcript; // Add the new recognized text
-        }
-    }
     console.log(transcript);
     document.getElementById('transcript').textContent = transcript;
-});
+};
 
 recognition.onend = () => {
     console.log('Speech recognition ended');
+    if(recording) {
+        recognition.start();
+    }
 };
 
 recognition.onerror = (event) => {
     console.error('Speech recognition error:', event.error);
 };
 
-let recording = false
 let button = document.getElementById("record_button");
 button.addEventListener("click", () => {
-    recording = !recording;
-    if(recording) {
+    if(!recording) {
         recognition.start();
     }
-    if(!recording) {
+    if(recording) {
+        recording = false;
         recognition.stop();
     }
 })
