@@ -6,12 +6,26 @@ import APIKey from './GeminiAPIKey';
 import TwilioAPIKey from './twilioAPIKey';
 
 // Twilio stuff
-import { Twilio } from 'twilio';
-
 async function textNumber() {
-  console.log("Needs Help!");
-  const client = new Twilio(TwilioAPIKey.TWILIO_SID, TwilioAPIKey.TWILIO_AUTH_TOKEN);
-  return client.messages.create({body:"HEY IT WORKS", from:"3476139940", to: TwilioAPIKey.PHONE_NUMBER});
+  try {
+    const response = await fetch("http://localhost:5000/send-sms", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ to: TwilioAPIKey.TWILIO_PHONE_NUMBER, message: "testing testing 987" }),
+    });
+
+    const data = await response.json();
+    if (data.success) {
+      return ("Message sent successfully!");
+    } else {
+      return (`Error: ${data.error}`);
+    }
+  } catch (error) {
+    return ("Failed to send message.");
+  }
+
 }
 
 
