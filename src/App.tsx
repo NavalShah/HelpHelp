@@ -5,7 +5,7 @@ import CallScreen from './components/CallScreen';
 const App: React.FC = () => {
   const [isCallScreen, setIsCallScreen] = useState(false);
 
-  const handleHelpClick = () => {
+  const handleCallClick = () => {
     setIsCallScreen(true);
   };
 
@@ -18,7 +18,7 @@ const App: React.FC = () => {
       {isCallScreen ? (
         <CallScreen onEndCall={handleEndCall} />
       ) : (
-        <StartScreen onHelpClick={handleHelpClick} />
+        <StartScreen onCallClick={handleCallClick} />
       )}
     </div>
   );
