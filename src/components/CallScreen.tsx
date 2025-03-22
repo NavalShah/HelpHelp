@@ -3,17 +3,8 @@ import React, { useState, useEffect } from 'react';
 // Gemini AI Call Integration
 import { ChatSession, GoogleGenerativeAI } from "@google/generative-ai";
 import APIKey from './GeminiAPIKey';
-import TwilioAPIKey from './TwilioAPIKey';
 
 // Twilio stuff
-import Twilio from "twilio";
-
-const accountSid = TwilioAPIKey.TWILIO_ACCOUNT_SID;
-const authToken = TwilioAPIKey.TWILIO_AUTH_TOKEN;
-const twilioNumber = TwilioAPIKey.TWILIO_PHONE_NUMBER;
-const myNumber = TwilioAPIKey.MY_NUMBER;
-
-const client = new Twilio.Twilio(accountSid, authToken);
 
 function textNumber() {
   console.log("Needs Help!");
