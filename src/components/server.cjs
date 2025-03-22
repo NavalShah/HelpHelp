@@ -1,10 +1,7 @@
-import express from "express";
-import { Twilio}  from "twilio";
-import dotenv from "dotenv";
-import cors from "cors";
-import TwilioAPIKey from './twilioAPIKey';
-
-dotenv.config();
+const TwilioAPIKey = require('./twilioAPI.cjs');
+const { Twilio } = require("twilio");
+const express = require("express");
+const cors = require("cors");
 
 const app = express();
 const port = 5000;
@@ -15,15 +12,19 @@ app.use(express.json());
 const client = new Twilio(TwilioAPIKey.TWILIO_ACCOUNT_SID, TwilioAPIKey.TWILIO_AUTH_TOKEN);
 
 app.post("/send-sms", async (req, res) => {
+    console.log("request received");
     const { to, message } = req.body;
     try {
+        console.log("sending response");
         const response = await client.messages.create({
             body: message,
             from: process.env.TWILIO_PHONE_NUMBER,
             to,
         });
+        console.log("no errors!");
         res.status(200).json({ success: true, response });
     } catch (error) {
+        console.log(error);
         res.status(500).json({ success: false, error });
     }
 });
