@@ -208,69 +208,7 @@ const styles = {
   },
   endCallIcon: {
     fontSize: '32px',
-  },
-    container: {
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        height: '100vh',
-        backgroundColor: '#000',
-        color: '#fff',
-        padding: '20px',
-    },
-    contactInfo: {
-        textAlign: 'center',
-        marginTop: '40px',
-    },
-    name: {
-        fontSize: '24px',
-        margin: '0',
-    },
-    status: {
-        fontSize: '16px',
-        margin: '10px 0 0',
-        color: '#888',
-    },
-    controls: {
-        display: 'grid',
-        gridTemplateColumns: 'repeat(3, 1fr)',
-        gap: '20px',
-        width: '100%',
-        maxWidth: '400px',
-        margin: '40px 0',
-    },
-    controlButton: {
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        backgroundColor: 'transparent',
-        border: 'none',
-        color: '#fff',
-        cursor: 'pointer',
-    },
-    controlIcon: {
-        fontSize: '24px',
-        marginBottom: '8px',
-    },
-    controlLabel: {
-        fontSize: '14px',
-        color: '#888',
-    },
-    endCallButton: {
-        gridColumn: '2 / 3',
-        width: '80px',
-        height: '80px',
-        fontSize: '24px',
-        backgroundColor: '#ff4444',
-        color: '#fff',
-        border: 'none',
-        borderRadius: '50%',
-        cursor: 'pointer',
-    },
-    endCallIcon: {
-        fontSize: '32px',
-    },
+  }
 };
 
 export default CallScreen;
