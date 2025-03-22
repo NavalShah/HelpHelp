@@ -18,8 +18,8 @@ app.post("/send-sms", async (req, res) => {
         console.log("sending response");
         const response = await client.messages.create({
             body: message,
-            from: process.env.TWILIO_PHONE_NUMBER,
-            to,
+            from: TwilioAPIKey.TWILIO_PHONE_NUMBER,
+            to: TwilioAPIKey.MY_NUMBER,
         });
         console.log("no errors!");
         res.status(200).json({ success: true, response });

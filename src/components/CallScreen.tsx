@@ -6,8 +6,24 @@ import APIKey from './GeminiAPIKey';
 
 // Twilio stuff
 
-function textNumber() {
+async function textNumber() {
   console.log("Needs Help!");
+
+  const response = await fetch("http://localhost:5000/send-sms", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ message: "help!" }),
+  });
+
+  const data = await response.json();
+  if (data.success) {
+    return ("Message sent successfully!");
+  } else {
+    return (`Error: ${data.error}`);
+  }
+
 }
 
 
