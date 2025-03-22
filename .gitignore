@@ -24,4 +24,5 @@ dist-ssr
 *.sw?
 
 # Secrets
-GeminiAPIKey.tsx
+#temp remove for vercel idgaf about security
+#GeminiAPIKey.tsx
