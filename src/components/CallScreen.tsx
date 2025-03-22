@@ -90,10 +90,7 @@ function startChat() {
     return model.startChat();
 }
 
-const restartChat = () => {
-    console.warn("Restarting chat...");
-    return startChat();
-};
+
 
 const SpeechRecognitionAPI = window.webkitSpeechRecognition || window.SpeechRecognition;
 
@@ -104,8 +101,8 @@ const CallScreen: React.FC<CallScreenProps> = ({ onEndCall }) => {
     const [isSpeaking, setIsSpeaking] = useState(false);
     const [userInputs, setUserInputs] = useState<string[]>([]);
     const [aiOutputs, setAiOutputs] = useState<string[]>([]);
-    const [time, setTime] = useState<number>(0);
-    const [calling, setCalling] = useState<boolean>(true);
+    const [time] = useState<number>(0);
+    const [calling] = useState<boolean>(true);
     const isMounted = React.useRef(true);
 
     useEffect(() => {

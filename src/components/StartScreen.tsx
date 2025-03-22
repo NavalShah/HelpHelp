@@ -75,11 +75,11 @@ const StartScreen: React.FC<StartScreenProps> = ({ onCallClick }) => {
 
       {/* Bottom Bar */}
       <div style={styles.bottomBar}>
-        <button style={styles.bottomBarButton}>Favorites</button>
-        <button style={styles.bottomBarButton}>Recents</button>
-        <button style={styles.bottomBarButton}>Contacts</button>
-        <button style={styles.bottomBarButton}>Keypad</button>
-        <button style={styles.bottomBarButton}>Voicemail</button>
+        <button style={styles.bottomBarButton}></button>
+        <button style={styles.bottomBarButton}></button>
+        <button style={styles.bottomBarButton}></button>
+        <button style={styles.bottomBarButton}></button>
+        <button style={styles.bottomBarButton}></button>
       </div>
 
             {/* App Information Section */}
