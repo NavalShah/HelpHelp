@@ -76,7 +76,7 @@ const restartChat = () => {
 
 const SpeechRecognitionAPI = window.webkitSpeechRecognition || window.SpeechRecognition;
 
-const CallScreen: React.FC<CallScreenProps> = ({ onEndCall }) => {
+const CallScreen: React.FC<CallScreenProps> = ({ }) => {
     const [chat, setChat] = useState<ChatSession>(startChat());
     const [isWaiting, setWaiting] = useState(false);
     const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
