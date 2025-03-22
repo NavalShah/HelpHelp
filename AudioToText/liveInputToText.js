@@ -8,7 +8,7 @@ let recording = false
 recognition.continuous = true;
 recognition.interimResults = true;
 recognition.lang = 'en-US';
-
+  
 setInterval(resetVoiceRecog, 10000);
 function resetVoiceRecog() {
     if(recording) {
