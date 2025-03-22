@@ -7,123 +7,148 @@ import APIKey from './GeminiAPIKey';
 const googleAI = new GoogleGenerativeAI(APIKey);
 const model = googleAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
-function startChat() {
-  let chat = model.startChat();
-  return chat;
+declare global {
+    interface Window {
+        webkitSpeechRecognition: typeof SpeechRecognition;
+    }
+
+    var SpeechRecognition: {
+        new (): SpeechRecognition;
+        prototype: SpeechRecognition;
+    };
+
+    interface SpeechRecognition {
+        start(): void;
+        stop(): void;
+        continuous: boolean;
+        interimResults: boolean;
+        lang: string;
+        onresult: ((event: SpeechRecognitionEvent) => void) | null;
+    }
+
+    interface SpeechRecognitionEvent extends Event {
+        results: SpeechRecognitionResultList;
+    }
+
+    interface SpeechRecognitionResultList {
+        readonly length: number;
+        item(index: number): SpeechRecognitionResult;
+        [index: number]: SpeechRecognitionResult;
+    }
+
+    interface SpeechRecognitionResult {
+        readonly length: number;
+        readonly isFinal: boolean;
+        item(index: number): SpeechRecognitionAlternative;
+        [index: number]: SpeechRecognitionAlternative;
+    }
+
+    interface SpeechRecognitionAlternative {
+        readonly transcript: string;
+        readonly confidence: number;
+    }
 }
 
-type Props = {
-  initialPrompt: string
-  chat?: ChatSession
-};
+function startChat() {
+    return model.startChat();
+}
 
 enum messageSender {
-  system,
-  user,
-  ai,
-  error
+    system,
+    user,
+    ai,
+    error
 }
 
 type message = {
-  sender: messageSender,
-  text: string
+    sender: messageSender,
+    text: string
 }
 
-function Gemini({ initialPrompt }: Props) {
-  const [chat, setChat] = useState<ChatSession>();
-  useEffect(() => {
-    if (!chat) setChat(startChat());
-  }, [chat]);
+function Gemini({ initialPrompt }: { initialPrompt: string }) {
+    const [chat, setChat] = useState<ChatSession>();
+    const [messages, setMessages] = useState<message[]>([]);
+    const [isWaiting, setWaiting] = useState(false);
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+    const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
 
-  const [messages, setMessages] = useState<message[]>([]);
-  const [input, setInput] = useState("");
-  const [isWaiting, setWaiting] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        if (!chat) setChat(startChat());
+        if ('webkitSpeechRecognition' in window) {
+            const SpeechRecognition = window.webkitSpeechRecognition;
+            const speechRec = new SpeechRecognition();
+            speechRec.continuous = false;
+            speechRec.interimResults = false;
+            speechRec.lang = 'en-US';
+            speechRec.onresult = (event: SpeechRecognitionEvent) => {
+                const transcript = event.results[0][0].transcript;
+                sendMessage(transcript);
+            };
+            setRecognition(speechRec);
+        }
+    }, [chat]);
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [messages]);
 
-  const sendMessage = async () => {
-    if (isWaiting) return;
-    if (input.trim() !== "") {
+    const speak = (text: string) => {
+        const synth = window.speechSynthesis;
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'en-US';
+        synth.speak(utterance);
+    };
 
-      let userMessage = "" + input;
-      setInput("");
+    const newMessage = (response: string) => {
+        speak(response);
+    };
 
-      setMessages(prev => [...prev, { text: userMessage, sender: messageSender.user }]);
+    const sendMessage = async (input: string) => {
+        if (isWaiting) return;
+        if (input.trim() !== "") {
+            setMessages(prev => [...prev, { text: input, sender: messageSender.user }]);
 
+            let aiContext = input;
+            if (messages.length === 0) {
+                aiContext = `Here is context for a conversation: '${initialPrompt}'.\n\nNow, begin:\n${input}`;
+            }
 
-      let aiContext = userMessage;
-      if (messages.length == 0) {
-        aiContext = `Here is context for a conversation you will have with someone: '${initialPrompt}' Answer their questions in short paragraphs.\n\nNow, the beginning of the conversation:\n${userMessage}`;
-      }
+            setWaiting(true);
+            try {
+                const result = await chat?.sendMessage(aiContext);
+                if (!result) throw new Error("Failed to get response from AI");
 
-      setWaiting(true);
-      try {
-        const result = await chat?.sendMessage(aiContext);
-        if (!result) throw new Error("Failed to get response from AI");
-        setChat(chat);
-        setMessages(prev => [...prev, { text: result.response.text(), sender: messageSender.ai }]);
-      } catch (error) {
-        setMessages(prev => [...prev, { text: "Error processing response.", sender: messageSender.error }]);
-      }
-      setWaiting(false);
-    }
-  };
+                setChat(chat);
+                const responseText = result.response.text();
+                setMessages(prev => [...prev, { text: responseText, sender: messageSender.ai }]);
+                newMessage(responseText);
+            } catch (error) {
+                setMessages(prev => [...prev, { text: "AI couldn't respond.", sender: messageSender.error }]);
+                newMessage("AI couldn't respond.");
+            }
+            setWaiting(false);
+        }
+    };
 
-  return (
-    <center className="flex flex-col h-full auto p-4 bg-gray-100 margin-auto">
-      <div className="flex bg-white p-4 shadow">
-        {initialPrompt}
-      </div>
-      <div className="bg-gray-200 p-1 shadow italic light">
-        You can use this Gemini-Powered chat to learn more.
-      </div>
-      <div className="flex flex-col overflow-auto bg-white p-4 shadow h-full flex-grow-1 space-y-2"> {/* Use flex-col and space-y for vertical stacking */}
-        {messages.map((msg, index) => (
-          (msg.sender !== messageSender.system && (
-            <div
-              key={index}
-              className={`flex h-auto p-2 my-2 rounded-lg text-white block max-w-[75%] ${
-                msg.sender === messageSender.user
-                  ? "bg-blue-500 self-end mr-auto justify-start"
-                  : msg.sender === messageSender.error
-                  ? "bg-red-500 justify ml-auto justify-end"
-                  : "bg-gray-500 ml-auto justify-end"
-              }`}
-            >
-              {msg.text}
+    const startListening = () => {
+        if (recognition) {
+            recognition.start();
+        }
+    };
+
+    return (
+        <div>
+            <button onClick={startListening}>🎤 Speak</button>
+            <div>
+                {messages.map((msg, index) => (
+                    <div key={index} className={msg.sender === messageSender.user ? 'user' : 'ai'}>
+                        {msg.text}
+                    </div>
+                ))}
+                <div ref={messagesEndRef} />
             </div>
-          ))
-        ))}
-
-        {isWaiting && (
-          <div className="flex justify-center items-center mt-2">
-            <div className="w-5 h-5 border-2 border-t-transparent border-blue-500 rounded-full animate-spin"></div>
-          </div>
-        )}
-
-        <div ref={messagesEndRef} />
-      </div>
-      <div className="flex mt-4">
-        <input
-          type="text"
-          className="flex-1 p-2 border rounded-lg square"
-          placeholder="Type a message..."
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-        />
-        <button
-          className={`ml-2 p-2 text-white rounded-lg ${isWaiting ? "bg-gray-500" : "bg-blue-500"}`}
-          onClick={sendMessage}
-        >
-          Send
-        </button>
-      </div>
-    </center>
-  );
+        </div>
+    );
 }
 
 export default Gemini;
