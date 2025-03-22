@@ -6,12 +6,27 @@ import APIKey from './GeminiAPIKey';
 import TwilioAPIKey from './twilioAPIKey';
 
 // Twilio stuff
-import { Twilio } from 'twilio';
+import Twilio from "twilio";
 
-async function textNumber() {
+const accountSid = TwilioAPIKey.TWILIO_ACCOUNT_SID;
+const authToken = TwilioAPIKey.TWILIO_AUTH_TOKEN;
+const twilioNumber = TwilioAPIKey.TWILIO_PHONE_NUMBER;
+const myNumber = TwilioAPIKey.MY_NUMBER;
+
+const client = new Twilio.Twilio(accountSid, authToken);
+
+function textNumber() {
   console.log("Needs Help!");
-  const client = new Twilio(TwilioAPIKey.TWILIO_SID, TwilioAPIKey.TWILIO_AUTH_TOKEN);
-  return client.messages.create({body:"HEY IT WORKS", from:"3476139940", to: TwilioAPIKey.PHONE_NUMBER});
+
+  /*
+  client.messages
+  .create({
+    from: twilioNumber,
+    to: myNumber,
+    body: "You just sent an SMS from TypeScript using Twilio!",
+  })
+  .then((message) => console.log(message.sid));
+  */
 }
 
 
