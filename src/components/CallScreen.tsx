@@ -93,6 +93,8 @@ const CallScreen: React.FC<CallScreenProps> = ({ onEndCall }) => {
     const [isWaiting, setWaiting] = useState(false);
     const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
     const [isSpeaking, setIsSpeaking] = useState(false);
+    const [userInputs, setUserInputs] = useState<string[]>([]);
+    const [aiOutputs, setAiOutputs] = useState<string[]>([]);
 
     useEffect(() => {
         if (!chat) setChat(startChat());
@@ -107,6 +109,7 @@ const CallScreen: React.FC<CallScreenProps> = ({ onEndCall }) => {
                 if(transcript.includes("help")) {
                   textNumber();
                 }
+                setUserInputs(prevInputs => [...prevInputs, transcript]);
                 sendMessage(transcript);
             };
             setRecognition(speechRec);
@@ -146,6 +149,7 @@ const CallScreen: React.FC<CallScreenProps> = ({ onEndCall }) => {
                 if (!result) throw new Error("Failed to get response from AI");
                 const responseText = await result.response.text();
                 console.log("AI Response:", responseText);
+                setAiOutputs(prevOutputs => [...prevOutputs, responseText]);
                 await speak(responseText);
             } catch (error) {
                 console.error("Error with AI response:", error);
@@ -191,6 +195,35 @@ const CallScreen: React.FC<CallScreenProps> = ({ onEndCall }) => {
         return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
     };
 
+    const handleEndCall = async () => {
+        console.log("End call button clicked");
+
+        try {
+            const response = await fetch("http://localhost:5000/write-call-log", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ userInputs, aiOutputs }),
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                console.log("Call log written successfully");
+            } else {
+                console.error("Error writing call log:", data.error);
+            }
+        } catch (error) {
+            console.error("Error calling write-call-log API:", error);
+        }
+
+        if (recognition) {
+            recognition.stop();
+        }
+        onEndCall();
+    };
+
     return (
         <div style={styles.container}>
             <div style={styles.contactInfo}>
@@ -204,10 +237,10 @@ const CallScreen: React.FC<CallScreenProps> = ({ onEndCall }) => {
                 <button style={styles.controlButton}><span style={styles.controlIcon}>➕</span><span style={styles.controlLabel}>Add</span></button>
                 <button style={styles.controlButton}><span style={styles.controlIcon}>📱</span><span style={styles.controlLabel}>Keypad</span></button>
             </div>
-            <button style={styles.endCallButton} onClick={onEndCall}><span style={styles.endCallIcon}>📞</span></button>
+            <button style={styles.endCallButton} onClick={handleEndCall}><span style={styles.endCallIcon}>📞</span></button>
         </div>
     );
-};
+}
 
 const styles = {
   container: {

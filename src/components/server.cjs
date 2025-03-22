@@ -147,6 +147,31 @@ app.post("/send-email", async (req, res) => {
   }
 });
 
+app.post("/write-call-log", async (req, res) => {
+    console.log("Write call log request received");
+    const { userInputs, aiOutputs } = req.body;
+
+    if (!userInputs || !aiOutputs) {
+        return res.status(400).json({
+            success: false,
+            error: "User inputs and AI outputs are required",
+        });
+    }
+
+    const csvData = [
+        ["User Input", "AI Output"],
+        ...userInputs.map((input, index) => [input, aiOutputs[index] || ""]),
+    ].map(row => row.join(",")).join("\n");
+
+    try {
+        require('fs').writeFileSync("logs/call_log.csv", csvData);
+        res.status(200).json({ success: true, message: "Call log written successfully" });
+    } catch (error) {
+        console.error("Error writing call log:", error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
   console.log(`To authorize with Outlook, visit: http://localhost:${port}/auth/outlook`);
