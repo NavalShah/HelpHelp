@@ -4,23 +4,25 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "concurrently \"vite\" \"ts-node src/server.ts\"",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.0",
+    "@types/express": "^5.0.1",
     "@types/web": "^0.0.213",
-    "eventemitter3": "^5.0.1",
     "express": "^4.21.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "ts-node": "^10.9.2",
     "twilio": "^5.5.1",
     "vite": "^6.2.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",
+    "@types/cors": "^2.8.17",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
     "@types/twilio": "^3.19.2",
