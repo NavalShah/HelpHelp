@@ -27,4 +27,4 @@ dist-ssr
 GeminiAPIKey.tsx
 TwilioAPIKey.tsx
 twilioAPIKey.tsx
-twilioAPI.js
+twilioAPI.cjs
