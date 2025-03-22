@@ -65,7 +65,7 @@ type message = {
     text: string
 }
 
-function Gemini({ initialPrompt }: { initialPrompt: string }) {
+function Gemini() {
     const [chat, setChat] = useState<ChatSession>();
     const [messages, setMessages] = useState<message[]>([]);
     const [isWaiting, setWaiting] = useState(false);
@@ -110,7 +110,7 @@ function Gemini({ initialPrompt }: { initialPrompt: string }) {
 
             let aiContext = input;
             if (messages.length === 0) {
-                aiContext = `Here is context for a conversation: '${initialPrompt}'.\n\nNow, begin:\n${input}`;
+                aiContext = `You are the endpoint of a helpline, the user is calling you because they feel unsafe. Try to maintain regular conversation to make it seem like the user is on a real call. If the user says help three times in a row, inform them that emergency services will be contacted shortly, and try your best to comfort them.`;
             }
 
             setWaiting(true);
@@ -139,14 +139,6 @@ function Gemini({ initialPrompt }: { initialPrompt: string }) {
     return (
         <div>
             <button onClick={startListening}>🎤 Speak</button>
-            <div>
-                {messages.map((msg, index) => (
-                    <div key={index} className={msg.sender === messageSender.user ? 'user' : 'ai'}>
-                        {msg.text}
-                    </div>
-                ))}
-                <div ref={messagesEndRef} />
-            </div>
         </div>
     );
 }
