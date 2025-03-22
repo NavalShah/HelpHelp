@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.0",
+    "@types/web": "^0.0.213",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "vite": "^6.2.0"
