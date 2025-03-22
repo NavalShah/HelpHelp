@@ -15,7 +15,7 @@ const StartScreen: React.FC<StartScreenProps> = ({ onCallClick }) => {
         <div style={styles.row}>
           <button style={styles.button}>
             <span style={styles.number}>1</span>
-            <span style={styles.letters}></span>
+            <span style={styles.letters}>~</span>
           </button>
           <button style={styles.button}>
             <span style={styles.number}>2</span>
