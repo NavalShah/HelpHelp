@@ -231,7 +231,7 @@ const styles = {
   },
     container: {
         display: 'flex',
-        flexDirection: 'column',
+        flexDirection: 'column' as 'column',
         justifyContent: 'space-between',
         alignItems: 'center',
         height: '100vh',
@@ -262,7 +262,7 @@ const styles = {
     },
     controlButton: {
         display: 'flex',
-        flexDirection: 'column',
+        flexDirection: 'column' as 'column',
         alignItems: 'center',
         backgroundColor: 'transparent',
         border: 'none',
