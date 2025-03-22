@@ -12,13 +12,67 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Microsoft OAuth2 URLs
+const MICROSOFT_OAUTH_URL = 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize';
 const MICROSOFT_TOKEN_URL = 'https://login.microsoftonline.com/common/oauth2/v2.0/token';
+
+app.get("/auth")
+
+// Generate authentication URL
+function getAuthUrl() {
+  return `${MICROSOFT_OAUTH_URL}?` + 
+    `client_id=${EmailConfig.CLIENT_ID}` +
+    `&response_type=code` +
+    `&redirect_uri=${encodeURIComponent(EmailConfig.REDIRECT_URI)}` +
+    `&response_mode=query` +
+    `&scope=${encodeURIComponent('offline_access https://outlook.office.com/SMTP.Send')}`;
+}
+
+console.log("Authorize your app by visiting this URL:", getAuthUrl());
+
+app.get('/auth/outlook/callback', async (req, res) => {
+    const { code } = req.query;
+
+    if (!code) {
+        return res.status(400).send('Authorization code not received');
+    }
+
+    try {
+        // Exchange authorization code for tokens
+        const response = await axios.post(MICROSOFT_TOKEN_URL, 
+        new URLSearchParams({
+            client_id: EmailConfig.CLIENT_ID,
+            client_secret: EmailConfig.CLIENT_SECRET,
+            code: code,
+            redirect_uri: EmailConfig.REDIRECT_URI,
+            grant_type: 'authorization_code'
+        }), {
+            headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+            }
+        }
+        );
+        
+        const { access_token, refresh_token, expires_in } = response.data;
+        
+        console.log("Access Token:", access_token);
+        console.log("Refresh Token:", refresh_token);
+        console.log("Token expires in:", expires_in, "seconds");
+        
+        res.send(`
+        <h1>Authentication Successful!</h1>
+        <p>Access Token and Refresh Token obtained. Check the server logs.</p>
+        `);
+    } catch (error) {
+        console.error('Error exchanging code for tokens:', error.response?.data || error.message);
+        res.status(500).send('Error obtaining tokens: ' + (error.response?.data?.error_description || error.message));
+    }
+});
 
 // Function to refresh access token automatically
 async function getAccessToken() {
   try {
     if (!EmailConfig.REFRESH_TOKEN) {
-      throw new Error("Missing refresh token in configuration.");
+      throw new Error("Missing refresh token in configuration. Visit the URL above to obtain one.");
     }
     
     const tokenResponse = await axios.post(MICROSOFT_TOKEN_URL,
