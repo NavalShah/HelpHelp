@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 
 // Gemini AI Call Integration
 import { ChatSession, GoogleGenerativeAI } from "@google/generative-ai";
@@ -6,10 +6,6 @@ import APIKey from './GeminiAPIKey';
 
 interface CallScreenProps {
   onEndCall: () => void;
-}
-
-const CallScreen: React.FC<CallScreenProps> = ({ onEndCall }) => {
-  
 }
 
 const googleAI = new GoogleGenerativeAI(APIKey);
@@ -24,33 +20,28 @@ const restartChat = () => {
     return startChat();
 };
 
-const CallScreen: React.FC = () => {
+const SpeechRecognitionAPI = window.webkitSpeechRecognition || window.SpeechRecognition;
+
+const CallScreen: React.FC<CallScreenProps> = ({ onEndCall }) => {
     const [chat, setChat] = useState<ChatSession>(startChat());
     const [isWaiting, setWaiting] = useState(false);
     const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
+    const [isSpeaking, setIsSpeaking] = useState(false);
 
     useEffect(() => {
         if (!chat) setChat(startChat());
-        if ('webkitSpeechRecognition' in window) {
-            const SpeechRecognition = window.webkitSpeechRecognition;
-            const speechRec = new SpeechRecognition();
-            speechRec.continuous = true; // Keep listening indefinitely
+        if (SpeechRecognitionAPI) {
+            const speechRec = new SpeechRecognitionAPI();
+            speechRec.continuous = true;
             speechRec.interimResults = false;
             speechRec.lang = 'en-US';
-            speechRec.onerror = (event) => {
-                console.error("Speech recognition error:", event);
-                restartRecognition();
-            };
-            speechRec.onend = () => {
-                console.warn("Speech recognition ended unexpectedly. Restarting...");
-                restartRecognition();
-            };
-            speechRec.onresult = (event) => {
+            speechRec.onresult = (event: SpeechRecognitionEvent) => {
+                if (isSpeaking) return; // Ignore AI-generated speech
                 const transcript = event.results[event.results.length - 1][0].transcript;
                 sendMessage(transcript);
             };
             setRecognition(speechRec);
-            speechRec.start();  // Start listening immediately
+            speechRec.start();
         }
     }, [chat]);
 
@@ -66,8 +57,10 @@ const CallScreen: React.FC = () => {
             const synth = window.speechSynthesis;
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = 'en-US';
+            utterance.onstart = () => setIsSpeaking(true);
             utterance.onend = () => {
-                startListening(); // Restart listening after speech
+                setIsSpeaking(false);
+                startListening();
                 resolve();
             };
             synth.speak(utterance);
@@ -75,7 +68,7 @@ const CallScreen: React.FC = () => {
     };
 
     const sendMessage = async (input: string) => {
-        input = input + " Respond briefly and conversationally.";
+        input = input + " Respond briefly and conversationally. Be casual, and brief. The user is calling you to speak to you, so don't use emojis and don't bother with formatting.";
         if (isWaiting) return;
         if (input.trim() !== "") {
             setWaiting(true);
@@ -96,7 +89,7 @@ const CallScreen: React.FC = () => {
 
     const startListening = () => {
         try {
-            if (recognition) {
+            if (recognition && !isSpeaking) {
                 recognition.start();
             }
         } catch (error) {
@@ -106,72 +99,44 @@ const CallScreen: React.FC = () => {
     };
 
     const [time, setTime] = useState<number>(0);
-  const [calling, setCalling] = useState<boolean>(true);
+    const [calling, setCalling] = useState<boolean>(true);
 
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      setCalling(false);
-      let startTime = Date.now();
-      const interval = setInterval(() => {
-        const elapsedTime = Date.now() - startTime;
-        setTime(elapsedTime);
-      }, 1000);
-      return () => clearInterval(interval);
-    }, 2000);
+    useEffect(() => {
+        const timeout = setTimeout(() => {
+            setCalling(false);
+            let startTime = Date.now();
+            const interval = setInterval(() => {
+                const elapsedTime = Date.now() - startTime;
+                setTime(elapsedTime);
+            }, 1000);
+            return () => clearInterval(interval);
+        }, 2000);
 
-    return () => clearTimeout(timeout);
-  }, []);
+        return () => clearTimeout(timeout);
+    }, []);
 
-  const formatTime = (milliseconds: number): string => {
-    const totalSeconds = Math.floor(milliseconds / 1000);
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds % 60;
-    const formattedMinutes = String(minutes).padStart(2, '0');
-    const formattedSeconds = String(seconds).padStart(2, '0');
-    return `${formattedMinutes}:${formattedSeconds}`;
-  };
+    const formatTime = (milliseconds: number): string => {
+        const totalSeconds = Math.floor(milliseconds / 1000);
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    };
 
-  return (
-    <div style={styles.container}>
-      {/* Contact Info */}
-      <div style={styles.contactInfo}>
-        <h2 style={styles.name}>John Doe</h2>
-        <p style={styles.status}>
-          {calling ? 'Calling...' : formatTime(time)}
-        </p>
-
-      </div>
-
-      {/* Call Controls */}
-      <div style={styles.controls}>
-        <button style={styles.controlButton}>
-          <span style={styles.controlIcon}>🔊</span>
-          <span style={styles.controlLabel}>Speaker</span>
-        </button>
-        <button style={styles.controlButton}>
-          <span style={styles.controlIcon}>📹</span>
-          <span style={styles.controlLabel}>FaceTime</span>
-        </button>
-        <button style={styles.controlButton}>
-          <span style={styles.controlIcon}>🎤</span>
-          <span style={styles.controlLabel}>Mute</span>
-        </button>
-        <button style={styles.controlButton}>
-          <span style={styles.controlIcon}>➕</span>
-          <span style={styles.controlLabel}>Add</span>
-        </button>
-        <button style={styles.controlButton}>
-          <span style={styles.controlIcon}>📞</span>
-          <span style={styles.controlLabel}>Keypad</span>
-        </button>
-        <button style={styles.controlButton}>
-          <span style={styles.controlIcon}>📞</span>
-          <span style={styles.controlLabel}>Keypad</span>
-        </button>
-
-      </div>
-    </div>
-  );
+    return (
+        <div style={styles.container}>
+            <div style={styles.contactInfo}>
+                <h2 style={styles.name}>John Doe</h2>
+                <p style={styles.status}>{calling ? 'Calling...' : formatTime(time)}</p>
+            </div>
+            <div style={styles.controls}>
+                <button style={styles.controlButton}><span style={styles.controlIcon}>🔊</span><span style={styles.controlLabel}>Speaker</span></button>
+                <button style={styles.controlButton}><span style={styles.controlIcon}>📹</span><span style={styles.controlLabel}>FaceTime</span></button>
+                <button style={styles.controlButton}><span style={styles.controlIcon}>🎤</span><span style={styles.controlLabel}>Mute</span></button>
+                <button style={styles.controlButton}><span style={styles.controlIcon}>➕</span><span style={styles.controlLabel}>Add</span></button>
+                <button style={styles.controlButton}><span style={styles.controlIcon}>📞</span><span style={styles.controlLabel}>Keypad</span></button>
+            </div>
+        </div>
+    );
 };
 
 const styles = {
