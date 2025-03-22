@@ -23,6 +23,9 @@ const Location = () => {
     };
 
     getLocation();
+    const intervalId = setInterval(getLocation, 5000);
+
+    return () => clearInterval(intervalId);
   }, []);
 
   return (
